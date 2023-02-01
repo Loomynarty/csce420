@@ -692,6 +692,9 @@ class Stack(object):
 
     def __init__(self):
         self.list = []
+        
+    def __str__(self):
+        return "[" + ", ".join(str(obj) for obj in self.list) + "]"
 
     def push(self, item):
         "Push 'item' onto the stack"
@@ -712,6 +715,9 @@ class Queue(object):
     def __init__(self):
         self.list = []
 
+    def __str__(self):
+        return "[" + ", ".join(str(obj) for obj in self.list) + "]"
+    
     def push(self, item):
         "Enqueue the 'item' into the queue"
         self.list.insert(0, item)

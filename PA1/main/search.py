@@ -32,9 +32,7 @@ def tiny_maze_search(problem):
     w = Directions.WEST
     return [s, s, w, s, w, w, s, w]
 
-
 def depth_first_search(problem):
-    
     # What does this function need to return?
     #     list of actions (actions shown below) that reaches the goal
     # 
@@ -62,13 +60,125 @@ def depth_first_search(problem):
     #     path_cost = problem.get_cost_of_actions(example_path)
     #     return example_path
     
+    # DFS is LIFO, using a Stack
+    class Node:
+        # Node: (state, action, parent)
+        def __init__(self, state, action=None, parent=None):
+            self.state = state
+            self.action = action
+            self.parent = parent
+            
+        def __str__(self):
+            return str(self.state)
+        
+        # Get a path from self to goal state
+        def solve(self):
+            solution = []
+            node = self
+            while node:
+                if node.action:
+                    solution.append(node.action)
+                node = node.parent
+            solution = list(reversed(solution))
+            # print("Solution Path: ", solution)
+            return solution
+            
+    start_node = Node(problem.get_start_state())
+    
+    # check if at goal already
+    if problem.is_goal_state(start_node.state):
+        return start_node.solve()
+    
+    # DFS = LIFO
+    fringe = util.Stack()
+    visited = []
+    fringe.push(start_node)
+    
+    while not fringe.is_empty():
+        node = fringe.pop()
+        visited.append(node.state)
+        
+        # check if at goal
+        if problem.is_goal_state(node.state):
+            return node.solve()
+        
+        # otherwise, expand to children
+        successors = problem.get_successors(node.state)
+        for ele in successors:
+            child_node = Node(ele[0], ele[1], node)
+            if child_node.state not in visited:
+                fringe.push(child_node)
+
+    # no solution found
+    print("------No solution found------")
     util.raise_not_defined()
+    
 
 
 def breadth_first_search(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
+    # BFS is FIFO, using a Queue
+    class Node:
+        # Node: (state, action, parent)
+        def __init__(self, state, action=None, parent=None):
+            self.state = state
+            self.action = action
+            self.parent = parent
+            
+        def __str__(self):
+            return str(self.state)
+        
+        # Get a path from self to goal state
+        def solve(self):
+            solution = []
+            node = self
+            while node:
+                if node.action:
+                    solution.append(node.action)
+                node = node.parent
+            solution = list(reversed(solution))
+            # print("Solution Path: ", solution)
+            return solution
+        
+        # check if object is in the fringe
+        def in_fringe(self, fringe):
+            for obj in fringe.list:
+                if obj.state == child_node.state:
+                    return True
+            return False
+            
+    start_node = Node(problem.get_start_state())
+    
+    # check if at goal already
+    if problem.is_goal_state(start_node.state):
+        return start_node.solve()
+    
+    # DFS = LIFO
+    fringe = util.Queue()
+    visited = []
+    fringe.push(start_node)
+    
+    while not fringe.is_empty():
+        node = fringe.pop()
+        visited.append(node.state)
+        
+        # check if at goal
+        if problem.is_goal_state(node.state):
+            return node.solve()
+        
+        # otherwise, expand to children
+        successors = problem.get_successors(node.state)
+        # print("next: ", successors)
+        for ele in successors:
+            child_node = Node(ele[0], ele[1], node)
+            if child_node.state not in visited and not child_node.in_fringe(fringe):
+                fringe.push(child_node)
+
+    # no solution found
+    print("------No solution found------")
     util.raise_not_defined()
+    # util.raise_not_defined()
 
 
 def uniform_cost_search(problem, heuristic=None):
