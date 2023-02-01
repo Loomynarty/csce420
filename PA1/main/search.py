@@ -32,6 +32,64 @@ def tiny_maze_search(problem):
     w = Directions.WEST
     return [s, s, w, s, w, w, s, w]
 
+class Node:
+    # Node: (state, action, parent)
+    def __init__(self, state, next=None, action=None, cost=0):
+        self.state = state
+        self.next = next
+        self.action = action
+        self.cost = cost
+        
+    def __str__(self):
+        return "[" + str(self.state) + ", " + str(self.next) + ", " + str(self.action) + ", " + str(self.cost) + "]"
+    
+    # Get a path from self to goal state
+    def solve(self, visited):
+        # print("-----solving-----")
+        solution = []
+        node = self
+        while node:
+            if node.action:
+                solution.append(node.action)
+            # Grab parent from visited
+            node = visited.get(node.state)
+        solution = list(reversed(solution))
+        # print("Solution Path: ", solution)
+        return solution
+
+def tree_search(problem, fringe):
+    start_node = Node(None, problem.get_start_state())
+    visited = dict()
+    fringe.push(start_node)
+    
+    while not fringe.is_empty():
+        # print("Visited: ", visited.keys())
+        node = fringe.pop()
+        # print("Node: ", node)
+        
+        # Skip if node ahead of self is visited
+        if node.next in visited:
+            # print("----Skipped----")
+            continue
+        
+        # Connect next to self, forming a parent/child relationship
+        visited[node.next] = node
+        
+        # check if at goal
+        if problem.is_goal_state(node.next):
+            return node.solve(visited)
+        
+        # otherwise, pull in successors
+        for next, action, cost in problem.get_successors(node.next):
+            child_node = Node(node.next, next, action, node.cost + cost)
+            # print("Child: ", child_node)
+            if child_node.next not in visited:
+                fringe.push(child_node)
+
+    # no solution found
+    print("------No solution found------")
+    util.raise_not_defined()
+
 def depth_first_search(problem):
     # What does this function need to return?
     #     list of actions (actions shown below) that reaches the goal
@@ -61,131 +119,22 @@ def depth_first_search(problem):
     #     return example_path
     
     # DFS is LIFO, using a Stack
-    class Node:
-        # Node: (state, action, parent)
-        def __init__(self, state, action=None, parent=None):
-            self.state = state
-            self.action = action
-            self.parent = parent
-            
-        def __str__(self):
-            return str(self.state)
-        
-        # Get a path from self to goal state
-        def solve(self):
-            solution = []
-            node = self
-            while node:
-                if node.action:
-                    solution.append(node.action)
-                node = node.parent
-            solution = list(reversed(solution))
-            # print("Solution Path: ", solution)
-            return solution
-            
-    start_node = Node(problem.get_start_state())
-    
-    # check if at goal already
-    if problem.is_goal_state(start_node.state):
-        return start_node.solve()
-    
-    # DFS = LIFO
-    fringe = util.Stack()
-    visited = []
-    fringe.push(start_node)
-    
-    while not fringe.is_empty():
-        node = fringe.pop()
-        visited.append(node.state)
-        
-        # check if at goal
-        if problem.is_goal_state(node.state):
-            return node.solve()
-        
-        # otherwise, expand to children
-        successors = problem.get_successors(node.state)
-        for ele in successors:
-            child_node = Node(ele[0], ele[1], node)
-            if child_node.state not in visited:
-                fringe.push(child_node)
-
-    # no solution found
-    print("------No solution found------")
-    util.raise_not_defined()
-    
-
-
+    return tree_search(problem, util.Stack())
+ 
 def breadth_first_search(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
     # BFS is FIFO, using a Queue
-    class Node:
-        # Node: (state, action, parent)
-        def __init__(self, state, action=None, parent=None):
-            self.state = state
-            self.action = action
-            self.parent = parent
-            
-        def __str__(self):
-            return str(self.state)
-        
-        # Get a path from self to goal state
-        def solve(self):
-            solution = []
-            node = self
-            while node:
-                if node.action:
-                    solution.append(node.action)
-                node = node.parent
-            solution = list(reversed(solution))
-            # print("Solution Path: ", solution)
-            return solution
-        
-        # check if object is in the fringe
-        def in_fringe(self, fringe):
-            for obj in fringe.list:
-                if obj.state == child_node.state:
-                    return True
-            return False
-            
-    start_node = Node(problem.get_start_state())
-    
-    # check if at goal already
-    if problem.is_goal_state(start_node.state):
-        return start_node.solve()
-    
-    # DFS = LIFO
-    fringe = util.Queue()
-    visited = []
-    fringe.push(start_node)
-    
-    while not fringe.is_empty():
-        node = fringe.pop()
-        visited.append(node.state)
-        
-        # check if at goal
-        if problem.is_goal_state(node.state):
-            return node.solve()
-        
-        # otherwise, expand to children
-        successors = problem.get_successors(node.state)
-        # print("next: ", successors)
-        for ele in successors:
-            child_node = Node(ele[0], ele[1], node)
-            if child_node.state not in visited and not child_node.in_fringe(fringe):
-                fringe.push(child_node)
-
-    # no solution found
-    print("------No solution found------")
-    util.raise_not_defined()
-    # util.raise_not_defined()
-
+    return tree_search(problem, util.Queue())
 
 def uniform_cost_search(problem, heuristic=None):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raise_not_defined()
-
+    # UCS selects the lowest cost, using a PriorityQueue
+    def extract_cost(node):
+        return node.cost
+    fringe = util.PriorityQueueWithFunction(extract_cost)
+    return tree_search(problem, fringe)
 
 # 
 # heuristics
@@ -225,10 +174,14 @@ def your_heuristic(state, problem=None):
         optimisitic_number_of_steps_to_goal = 0
         return optimisitic_number_of_steps_to_goal
 
-def a_star_search(problem, heuristic=your_heuristic):
+def a_star_search(problem, heuristic=null_heuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raise_not_defined()
+    # A* selects the lowest combined cost and heuristic, using a PriorityQueue
+    def extract_cost(node):
+        return node.cost + heuristic(node.next, problem)
+    fringe = util.PriorityQueueWithFunction(extract_cost)
+    return tree_search(problem, fringe)
 
 
 # (you can ignore this, although it might be helpful to know about)

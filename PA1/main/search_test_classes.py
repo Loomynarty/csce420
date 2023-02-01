@@ -20,7 +20,7 @@ from builtins import range
 import re
 import test_classes
 import textwrap
-
+import pprint
 # import project specific code
 import layout
 import pacman
