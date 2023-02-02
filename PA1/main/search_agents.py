@@ -38,6 +38,7 @@ import time
 import search
 import tools
 
+import math
 
 class GoWestAgent(Agent):
     "An agent that goes West until it can't."
@@ -346,20 +347,23 @@ class CornersProblem(search.SearchProblem):
         #     self.debugging = True
         #     self.total_iterations = 0
         "*** YOUR CODE HERE ***"
+        self.start = (self.starting_position, self.corners)
 
     def get_start_state(self):
         """
         Returns the start state (in your state space, not the full Pacman state space)
         """
         "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        return self.start
 
     def is_goal_state(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        # Corners 
+        position, corners = state
+        return corners == (position,)
 
     def get_successors(self, state):
         
@@ -400,6 +404,27 @@ class CornersProblem(search.SearchProblem):
         #             next_state = (nextx, nexty)
         #             cost = self.cost_fn(next_state)
         #             successors.append(tools.Transition(next_state, action, cost))
+        position, corners = state
+        
+        successors = []
+        
+        for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
+            x, y = position
+            dx, dy = Actions.direction_to_vector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            
+            # continue if pacman hits a wall 
+            if self.walls[nextx][nexty]:
+                continue
+            
+            next_position = (nextx, nexty)
+            # remove corners that are touched after the next move
+            next_corners = tuple(
+                corner for corner in corners
+                if corner != position
+            )
+            next_state = (next_position, next_corners)
+            successors.append(tools.Transition([next_state, action, 1]))
         
         self._expanded += 1  # NOTE: STUFF WILL BREAK IF YOU CHANGE THIS
         return successors
@@ -419,7 +444,6 @@ class CornersProblem(search.SearchProblem):
                 return 999999
         return len(actions)
 
-
 def corners_heuristic(state, problem):
     """
     A heuristic for the CornersProblem that you defined.
@@ -437,7 +461,28 @@ def corners_heuristic(state, problem):
     walls = problem.walls  # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    return 0  # Default to trivial solution
+    # Find the minimum manhattan distance between position and one point
+    def min_manhattan(position, points):
+        index, dist = None, math.inf
+        for i, point in enumerate(points):
+            d = util.manhattan_distance(position, point)
+            if d < dist:
+                index, dist = i, d
+        return index, dist
+    
+    position, points = state
+    
+    points = list(points)
+    optimal_cost = 0
+    while points != []:
+        # Find the minimum manhattan distance
+        index, dist = min_manhattan(position, points)
+        optimal_cost += dist
+        
+        # Pop the point with the smallest distance
+        position = points[index]
+        points.pop(index)
+    return optimal_cost
 
 
 class AStarCornersAgent(SearchAgent):
@@ -552,7 +597,26 @@ def food_heuristic(state, problem):
     """
     position, food_grid = state
     "*** YOUR CODE HERE ***"
-    return 0
+    # Convert food grid to a list
+    food_list = food_grid.as_list()
+    
+    # if state is already at goal, return 0
+    if problem.is_goal_state(state):
+        return 0
+    
+    distances = []
+    # Loop through every food in the list
+    for food in food_list:
+        # Create a PositionSearchProblem to find the shortest path for the current position and the selected food
+        psp = PositionSearchProblem(
+            problem.starting_game_state, start=position, goal=food, warn=False, visualize=False
+        )
+        # Use BFS to solve the new problem, and calculate the number of moves needed
+        distance = len(search.bfs(psp))
+        distances.append(distance)
+    
+    # Return the largest value of the distances found
+    return max(distances)
 
 
 class ClosestDotSearchAgent(SearchAgent):
@@ -590,7 +654,8 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(game_state)
 
         "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        # Use the bfs inplementation I wrote
+        return search.bfs(problem)
 
 
 class AnyFoodSearchProblem(PositionSearchProblem):
@@ -627,7 +692,7 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x, y = state
 
         "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        return self.food[x][y]
 
 
 def maze_distance(point1, point2, game_state):

@@ -80,7 +80,8 @@ def tree_search(problem, fringe):
             return node.solve(visited)
         
         # otherwise, pull in successors
-        for next, action, cost in problem.get_successors(node.next):
+        successors = problem.get_successors(node.next)
+        for next, action, cost in successors:
             child_node = Node(node.next, next, action, node.cost + cost)
             # print("Child: ", child_node)
             if child_node.next not in visited:
