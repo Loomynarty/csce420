@@ -85,7 +85,7 @@ class ReflexAgent(Agent):
         food_score = 0
         for i in food_list:
           food_dist = util.manhattan_distance(i, new_pos)
-          if (food_dist) != 0:
+          if food_dist != 0:
             food_score += 1 / food_dist
         
         return score + food_score
@@ -148,7 +148,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         def maximizer(state, depth):
 
           # Stop branching if at the max depth or game_state is a win or lose
-          if depth==self.depth or state.is_win() or state.is_lose():
+          if depth == self.depth or state.is_win() or state.is_lose():
             return self.evaluation_function(state)
 
           max_value = float("-inf")
@@ -164,7 +164,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         # min function - minimize the score of Pacman via other agents
         def minimizer(state, depth, agent_index):
           # Stop branching if at the max depth or game_state is a win or lose     
-          if depth==self.depth or state.is_win() or state.is_lose():
+          if depth == self.depth or state.is_win() or state.is_lose():
             return self.evaluation_function(state)
 
           min_value = float("inf")
@@ -201,13 +201,77 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     """
       Your minimax agent with alpha-beta pruning (question 3)
     """
-
+    
     def get_action(self, game_state):
-        """
-          Returns the minimax action using self.depth and self.evaluation_function
-        """
-        "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+      
+        # max function - maximize the score of Pacman
+        def maximizer(state, depth, alpha, beta):
+
+          # Stop branching if at the max depth or game_state is a win or lose
+          if depth == self.depth or state.is_win() or state.is_lose():
+            return self.evaluation_function(state)
+
+          max_value = float("-inf")
+          pacman_legal_moves = state.get_legal_actions()
+
+          # branch out using the min function, then take the max value of the result of the mins
+          # use agent_index = 0 to retrieve Pacman
+          for action in pacman_legal_moves:
+            max_value = max(max_value, minimizer(state.generate_successor(0, action), depth, 1, alpha, beta))            
+            
+            if max_value > beta:
+              return max_value
+            
+            alpha = max(alpha, max_value)
+          return max_value
+        
+        # min function - minimize the score of Pacman via other agents
+        def minimizer(state, depth, agent_index, alpha, beta):
+          # Stop branching if at the max depth or game_state is a win or lose     
+          if depth == self.depth or state.is_win() or state.is_lose():
+            return self.evaluation_function(state)
+
+          min_value = float("inf")
+          agent_legal_moves = state.get_legal_actions(agent_index)
+          
+          # branch out using the max function, then take the min value of the result of the maxes
+          # use agent_index > 0 to retrieve Ghosts
+          
+          # if agent_index is the last ghost, we have created all the min functions for the agents - switch to max functions for Pacman's turn
+          if agent_index == state.get_num_agents() - 1:
+            for action in agent_legal_moves:
+              min_value = min(min_value, maximizer(state.generate_successor(agent_index, action), depth + 1, alpha, beta))
+              
+              if min_value < alpha:
+                return min_value
+              
+              beta = min(beta, min_value)
+
+          # create min functions for all agents
+          else:
+            for action in agent_legal_moves:
+              min_value = min(min_value, minimizer(state.generate_successor(agent_index, action), depth, agent_index + 1, alpha, beta))
+              
+              if min_value < alpha:
+                return min_value
+              
+              beta = min(beta, min_value)
+              
+          return min_value
+
+        legal_moves = game_state.get_legal_actions()
+        optimal_action = Directions.STOP
+        value = float("-inf")
+        alpha = float("-inf")
+        beta = float("inf")
+
+        for action in legal_moves:
+          action_value = minimizer(game_state.generate_successor(0, action), 0, 1, alpha, beta)
+          if action_value > value:
+            value = action_value
+            optimal_action = action
+          alpha = max(alpha, value)
+        return optimal_action
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -222,7 +286,58 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        # max function - maximize the score of Pacman
+        def maximizer(state, depth):
+
+          # Stop branching if at the max depth or game_state is a win or lose
+          if depth == self.depth or state.is_win() or state.is_lose():
+            return self.evaluation_function(state)
+
+          max_value = float("-inf")
+          pacman_legal_moves = state.get_legal_actions()
+
+          # branch out using the min function, then take the max value of the result of the mins
+          # use agent_index = 0 to retrieve Pacman
+          for action in pacman_legal_moves:
+            max_value = max(max_value, expecter(state.generate_successor(0, action), depth, 1))            
+
+          return max_value
+        
+        # min function - minimize the score of Pacman via other agents
+        def expecter(state, depth, agent_index):
+          # Stop branching if at the max depth or game_state is a win or lose     
+          if depth == self.depth or state.is_win() or state.is_lose():
+            return self.evaluation_function(state)
+
+          expect_value = 0
+          agent_legal_moves = state.get_legal_actions(agent_index)
+          
+          # branch out using the max function, then take the min value of the result of the maxes
+          # use agent_index > 0 to retrieve Ghosts
+          
+          # if agent_index is the last ghost, we have created all the min functions for the agents - switch to max functions for Pacman's turn
+          if agent_index == state.get_num_agents() - 1:
+            for action in agent_legal_moves:
+              expect_value += maximizer(state.generate_successor(agent_index, action), depth + 1)
+
+          # create min functions for all agents
+          else:
+            for action in agent_legal_moves:
+              expect_value += expecter(state.generate_successor(agent_index, action), depth, agent_index + 1)
+
+          return expect_value / len(legal_moves)
+
+        legal_moves = game_state.get_legal_actions()
+        optimal_action = Directions.STOP
+        value = float("-inf")
+
+        for action in legal_moves:
+          action_value = expecter(game_state.generate_successor(0, action), 0, 1)
+          if action_value > value:
+            value = action_value
+            optimal_action = action
+          
+        return optimal_action
 
 def better_evaluation_function(current_game_state):
     """
@@ -232,7 +347,46 @@ def better_evaluation_function(current_game_state):
       DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    util.raise_not_defined()
+    current_pos = current_game_state.get_pacman_position()
+    current_food = current_game_state.get_food()
+    capsule_pos = current_game_state.get_capsules()
+    
+    # generate the manhattan distance of every food in relation to pacman's position
+    food_dists = []
+    for food in current_food.as_list():
+      food_dists.append(manhattan_distance(current_pos, food))
+      
+    # generate the manhattan distance of every capsule in relation to pacman's position
+    capsule_dists = []
+    for capsule in capsule_pos:
+      capsule_dists.append(manhattan_distance(current_pos, capsule))
+      
+    score = 0
+    x, y = current_pos
+    
+    # calculate ghost score
+    ghost_score = 0
+    for ghost_state in current_game_state.get_ghost_states():
+      ghost_dist = manhattan_distance(current_pos, ghost_state.get_position())
+      
+      # if the ghost distance is close, increase score if scared and decrease score if normal
+      if ghost_dist < 2:
+        if ghost_state.scared_timer != 0:
+          ghost_score += 1000 / (ghost_dist + 1)
+        else:
+          ghost_score -= 1000 / (ghost_dist + 1)
+    
+    # calculate capsule score - increase score the closer pacman is to the closet capsule
+    capsule_score = 0
+    if min(capsule_dists + [100] ) < 5:
+      capsule_score += 500 / min(capsule_dists)
+    
+    # calculate food score - increase score the closer pacman is to the closest food and decrease score for the number of remaining foods
+    food_score = 1 / min(food_dists + [100]) - len(food_dists) * 10
+    
+    return score + ghost_score + capsule_score + food_score
+    
+    
 
 # Abbreviation
 better = better_evaluation_function
