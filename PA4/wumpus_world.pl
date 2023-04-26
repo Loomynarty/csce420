@@ -35,6 +35,7 @@ type_of_evaluate_world(fig72). % Change this to random for true evaluation.
 :- dynamic  wumpus_world_extent/1,  wumpus_location/2, wumpus_health/1,  gold/2,  pit/2.
 :- dynamic  agent_location/2,  agent_orientation/1,  agent_in_cave/1,  agent_health/1.
 :- dynamic  agent_gold/1,  agent_arrows/1,  agent_score/1.
+:- dynamic  ww_initial_state/1.
 
 wumpus_world_default_extent(4).  % Default size of the cave is 4x4
 %WNe
