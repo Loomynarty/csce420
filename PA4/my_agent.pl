@@ -249,16 +249,13 @@ wumpus(X, Y) :-
   not(noStench(X, Y1)), 
   not(noStench(X, Y2)).
 
-% wumpus nearby?
-% Is one of neighboring tiles the wumpus?
-% Tells the agent to look around to kill it.
+% look for nearby wumpus
 wumpusFound(X, Y) :- X1 is X - 1, verifyWumpus(X1,Y).
 wumpusFound(X, Y) :- X2 is X + 1, verifyWumpus(X2,Y).
 wumpusFound(X, Y) :- Y1 is Y - 1, verifyWumpus(X,Y1).
 wumpusFound(X, Y) :- Y2 is Y + 1, verifyWumpus(X,Y2).
 
-% Confirmed Wumpus?
-% If we found a tile with two neighboring stenches, we have likely found the wumpus and should kill it if we are looking at it.
+% Verifiy the wumpus location
 verifyWumpus(X,Y) :- X1 is X - 1, Y1 is Y - 1, stench(X1, Y), stench(X, Y1), not(visited(X, Y)).
 verifyWumpus(X,Y) :- X1 is X - 1, Y2 is Y + 1, stench(X1, Y), stench(X, Y2), not(visited(X, Y)).
 verifyWumpus(X,Y) :- X1 is X - 1, X2 is X + 1, stench(X1, Y), stench(X2, Y), not(visited(X, Y)).
@@ -266,8 +263,7 @@ verifyWumpus(X,Y) :- X2 is X + 1, Y1 is Y - 1, stench(X2, Y), stench(X, Y1), not
 verifyWumpus(X,Y) :- X2 is X + 1, Y2 is Y + 1, stench(X2, Y), stench(X, Y2), not(visited(X, Y)).
 verifyWumpus(X,Y) :- Y1 is X + 1, Y2 is Y + 1, stench(X, Y1), stench(X, Y2), not(visited(X, Y)).
 
-% Possible Pit?
-% if none of the neighboring spaces lack a breeze, we must assume a wumpus.
+% if none of the neighboring spaces lack a breeze, assume a wumpus.
 pit(X, Y) :- 
   not(visited(X, Y)), 
   X1 is X - 1, X2 is X + 1, 
@@ -277,18 +273,12 @@ pit(X, Y) :-
   not(noBreeze(X, Y1)), 
   not(noBreeze(X, Y2)).
 
-% Is Safe?
-% Is the tile safe? changes depending on the state of the wumpus and arrow.
 isSafe(X,Y) :- not(pit(X,Y)), not(wumpus(X,Y)).
 isSafe(X,Y) :- not(pit(X,Y)), shootWumpus.
 isSafe(X,Y) :- not(pit(X,Y)), safe(X,Y).
 
-% Unvisited nearby?
-% Is one of neighboring tiles unvisited?
-% We want to prioritize unvisited tiles.
+% Prioritize unvisited tiles.
 unvisited(X, Y) :- X1 is X - 1, not(visited(X1, Y)), not(wall(X1,Y)), isSafe(X1,Y).
 unvisited(X, Y) :- X2 is X + 1, not(visited(X2, Y)), not(wall(X2,Y)), isSafe(X2,Y).
 unvisited(X, Y) :- Y1 is Y - 1, not(visited(X, Y1)), not(wall(X,Y1)), isSafe(X,Y1).
 unvisited(X, Y) :- Y2 is Y + 1, not(visited(X, Y2)), not(wall(X,Y2)), isSafe(X,Y2).
-
-
