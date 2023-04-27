@@ -19,7 +19,7 @@
 %   evaluate_agent(Trials,Score,Time)
 %   initialize(World,Percept)
 
-type_of_evaluate_world(fig72). % Change this to random for true evaluation.
+type_of_evaluate_world(random). % Change this to random for true evaluation.
 
 %WNb
 % modified for SWI-Prolog

@@ -91,7 +91,7 @@ run_agent([_,_,_,_,yes], _) :-
   false().
 
 % Bumped into wall - retrace steps
-run_agent([_,_,_,yes,_], turnright):- 
+run_agent([_,_,_,yes,_], turnright) :- 
   location(X,Y), 
   retract(visited(X,Y)), 
   assert(wall(X,Y)),  
@@ -106,130 +106,115 @@ run_agent([_,_,_,yes,_], turnright):-
   update_fact(direction(A), direction(B)).
 
 % If there is a wumpus nearby, assert a stench
-run_agent([yes,_,_,no,_], _):- 
+run_agent([yes,_,_,no,_], _) :- 
   location(X,Y), 
   assert(stench(X, Y)), 
-  write("I smell a Wumpus.\n"),
   false().
 
 % If there is not a wumpus nearby, assert a noStench
-run_agent([no,_,_,no,_], _):- 
+run_agent([no,_,_,no,_], _) :- 
   location(X,Y), 
   assert(noStench(X, Y)), 
-  write("Smells fine.\n"), 
-  false().
-
-% If there is a pit nearby, assert nothing.
-run_agent([_,yes,_,no,_], _):- 
-  write("I feel a breeze.\n"), 
   false().
 
 % If there is not a pit nearby, assert a noBreeze.
-run_agent([_,no,_,no,_], _):- 
+run_agent([_,no,_,no,_], _) :- 
   location(X,Y), 
   assert(noBreeze(X, Y)), 
-  write("The air is still.\n"), 
   false().
 
 % Shoot the wumpus
-run_agent([yes,_,_,_,_], shoot):- 
+run_agent([yes,_,_,_,_], shoot) :- 
   haveArrow, 
   location(X,Y),
   get_next_location(X, Y, Dx, Dy), 
-  conWumpus(Dx,Dy),
-  write("The wumpus is in my sight!.\n"), 
-  assert(safe(Dx, Dy)), 
+  verifyWumpus(Dx,Dy),
+  assert(safe(Dx, Dy)),
+
+
+
   retract(haveArrow).
 
 % Setup for arrow
-run_agent(_, turnright):- 
+run_agent(_, turnright) :- 
   haveArrow, 
   location(X,Y), 
   wumpusFound(X,Y), 
   update_fact(boredom(_), boredom(0)), 
   direction(A), 
   turn(A,B), 
-  update_fact(direction(A), direction(B)), 
-  write("I found the wumpus!").
+  update_fact(direction(A), direction(B)).
 
 % Grab the gold
-run_agent([_,_,yes,_,_], grab):- 
+run_agent([_,_,yes,_,_], grab) :- 
   gold(0), 
-  write("grab\n"), 
   assert(gold(1)).
 
 % Climb out if starting with a breeze
-run_agent([_,yes,_,_,_], climb):- 
-  location(1,1), 
-  write("Not worth falling into a pit!\n") .
+run_agent([_,yes,_,_,_], climb) :- 
+  location(1,1).
 
 % Use arrow to determine the safe path
-run_agent([yes,_,_,_,_], shoot):- 
+run_agent([yes,_,_,_,_], shoot) :- 
   location(1,1), 
   haveArrow, 
   get_next_location(1, 1, Dx, Dy), 
   assert(safe(Dx, Dy)),
-  retract(haveArrow), 
-  write("I'm in a corner with the beast!.\n").
+  retract(haveArrow).
 
 % Climb out if goHome
-run_agent([_,_,_,_,_], climb):- 
+run_agent([_,_,_,_,_], climb) :- 
   location(1,1), 
   goHome.
 
 % If there could be a pit ahead, turn right.
-run_agent([_,_,_,_,_], turnright):- 
+run_agent([_,_,_,_,_], turnright) :- 
   location(X,Y), 
   get_next_location(X, Y, Dx, Dy), 
   pit(Dx, Dy), 
-  write("A pit is ahead.\n"),
   direction(A), 
   turn(A,B), 
   update_fact(direction(A), direction(B)).
 
 % If there could be a live wumpus ahead, turn right.
-run_agent([_,_,_,_,_], turnright):- 
+run_agent([_,_,_,_,_], turnright) :- 
   location(X,Y), 
   get_next_location(X, Y, Dx, Dy), 
   not(shootWumpus), 
   not(safe(Dx,Dy)),
   wumpus(Dx, Dy), 
-  write("A wumpus is ahead.\n"), 
   direction(A),
   turn(A,B), 
   update_fact(direction(A), direction(B)).
 
 % Avoid known walls
-run_agent(_,turnright):- 
+run_agent(_,turnright) :- 
   location(X,Y), 
   get_next_location(X, Y, Dx, Dy), 
   wall(Dx, Dy), 
   direction(A), 
   turn(A,B),
-  update_fact(direction(A), direction(B)), 
-  write("Wall ahead.").
+  update_fact(direction(A), direction(B)).
 
 % Wander back home
-run_agent(_, goforward):- 
+run_agent(_, goforward) :- 
   location(X,Y), 
   get_next_location(X, Y, Dx, Dy), 
   goHome, 
   visited(Dx,Dy),
-  update_fact(location(X,Y), location(Dx, Dy)), 
-  write("forward!").
+  update_fact(location(X,Y), location(Dx, Dy)).
 
 % Wander to the gold
-run_agent(_,turnleft):- 
+run_agent(_,turnleft) :- 
   location(X,Y), 
   get_next_location(X, Y, Dx, Dy), 
   goHome, 
   not(visited(Dx, Dy)), 
   direction(A),
   turn(B,A), 
-  update_fact(direction(A), direction(B)),
-  write("Unvisited tile ahead, turn!").
+  update_fact(direction(A), direction(B)).
 
-run_agent(_,turnright):- 
+run_agent(_,turnright) :- 
   location(X,Y), 
   get_next_location(X, Y, Dx, Dy), 
   not(goHome), 
@@ -238,18 +223,14 @@ run_agent(_,turnright):-
   visited(Dx, Dy), 
   direction(A), 
   turn(A,B),
-  update_fact(direction(A), direction(B)), 
-  write("Unvisited tile nearby!").
+  update_fact(direction(A), direction(B)).
 
 % If nothing eventful happened, walk forward
-run_agent(_,goforward):- 
+run_agent(_, goforward) :- 
   location(X,Y), 
   get_next_location(X, Y, Dx, Dy), 
   assert(visited(Dx, Dy)),
-  update_fact(location(X,Y), location(Dx, Dy)), 
-  write("forward!").
-
-
+  update_fact(location(X,Y), location(Dx, Dy)).
 
 % ------- Helper Functions -------
 % Get X and Y movement based on current direction
@@ -258,8 +239,7 @@ get_next_location(X, Y, Dx, Dy) :- direction(north), Dx is X, Dy is Y + 1.
 get_next_location(X, Y, Dx, Dy) :- direction(west), Dx is X - 1, Dy is Y.
 get_next_location(X, Y, Dx, Dy) :- direction(south), Dx is X, Dy is Y - 1.
 
-% Possible Wumpus?
-% if none of the neighboring spaces lack a stench, we must assume a wumpus.
+% if none of the neighboring spaces lack a stench, assume a wumpus.
 wumpus(X, Y) :- 
   not(visited(X, Y)), 
   X1 is X - 1, X2 is X + 1, 
@@ -272,19 +252,19 @@ wumpus(X, Y) :-
 % wumpus nearby?
 % Is one of neighboring tiles the wumpus?
 % Tells the agent to look around to kill it.
-wumpusFound(X, Y) :- X1 is X - 1, conWumpus(X1,Y).
-wumpusFound(X, Y) :- X2 is X + 1, conWumpus(X2,Y).
-wumpusFound(X, Y) :- Y1 is Y - 1, conWumpus(X,Y1).
-wumpusFound(X, Y) :- Y2 is Y + 1, conWumpus(X,Y2).
+wumpusFound(X, Y) :- X1 is X - 1, verifyWumpus(X1,Y).
+wumpusFound(X, Y) :- X2 is X + 1, verifyWumpus(X2,Y).
+wumpusFound(X, Y) :- Y1 is Y - 1, verifyWumpus(X,Y1).
+wumpusFound(X, Y) :- Y2 is Y + 1, verifyWumpus(X,Y2).
 
 % Confirmed Wumpus?
 % If we found a tile with two neighboring stenches, we have likely found the wumpus and should kill it if we are looking at it.
-conWumpus(X,Y) :- X1 is X - 1, Y1 is Y - 1, stench(X1, Y), stench(X, Y1), not(visited(X, Y)).
-conWumpus(X,Y) :- X1 is X - 1, Y2 is Y + 1, stench(X1, Y), stench(X, Y2), not(visited(X, Y)).
-conWumpus(X,Y) :- X1 is X - 1, X2 is X + 1, stench(X1, Y), stench(X2, Y), not(visited(X, Y)).
-conWumpus(X,Y) :- X2 is X + 1, Y1 is Y - 1, stench(X2, Y), stench(X, Y1), not(visited(X, Y)).
-conWumpus(X,Y) :- X2 is X + 1, Y2 is Y + 1, stench(X2, Y), stench(X, Y2), not(visited(X, Y)).
-conWumpus(X,Y) :- Y1 is X + 1, Y2 is Y + 1, stench(X, Y1), stench(X, Y2), not(visited(X, Y)).
+verifyWumpus(X,Y) :- X1 is X - 1, Y1 is Y - 1, stench(X1, Y), stench(X, Y1), not(visited(X, Y)).
+verifyWumpus(X,Y) :- X1 is X - 1, Y2 is Y + 1, stench(X1, Y), stench(X, Y2), not(visited(X, Y)).
+verifyWumpus(X,Y) :- X1 is X - 1, X2 is X + 1, stench(X1, Y), stench(X2, Y), not(visited(X, Y)).
+verifyWumpus(X,Y) :- X2 is X + 1, Y1 is Y - 1, stench(X2, Y), stench(X, Y1), not(visited(X, Y)).
+verifyWumpus(X,Y) :- X2 is X + 1, Y2 is Y + 1, stench(X2, Y), stench(X, Y2), not(visited(X, Y)).
+verifyWumpus(X,Y) :- Y1 is X + 1, Y2 is Y + 1, stench(X, Y1), stench(X, Y2), not(visited(X, Y)).
 
 % Possible Pit?
 % if none of the neighboring spaces lack a breeze, we must assume a wumpus.
