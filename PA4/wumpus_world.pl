@@ -181,6 +181,20 @@ initialize_world(fig72) :-
   ww_initial_state(L),
   assert_list(L).
 
+% Test
+initialize_world(test1) :-
+  ww_retractall,
+  retractall(ww_initial_state(_)),
+  assert(ww_initial_state([])),
+  addto_ww_init_state(wumpus_world_extent(4)),
+  addto_ww_init_state(wumpus_location(1,3)),
+  addto_ww_init_state(wumpus_health(alive)),
+  addto_ww_init_state(gold(2,3)),
+  addto_ww_init_state(gold(4,3)),
+  addto_ww_init_state(gold(2,1)),
+  ww_initial_state(L),
+  assert_list(L).
+
 initialize_world(random) :-
   ww_retractall,
   retractall(ww_initial_state(_)),
