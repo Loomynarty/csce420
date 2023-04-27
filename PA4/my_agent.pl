@@ -11,6 +11,13 @@
 %
 % This is what should be fleshed out
 
+% Name: Zach Spelce
+% UIN: 527008052
+% Resources Used:
+% Aggie Code of Honor: An Aggie does not lie, cheat or steal or tolerate those who do.
+% Additional Comments: I added the "load_files" at line 21 for ease of use.
+% To run, simply load [my_agent]. and wumpus_world will also be loaded.
+
 :- load_files([wumpus_world]).
 
 :- dynamic haveArrow/0, goHome/0, wall/2, safe/2, shootWumpus/0, noBreeze/2, noStench/2, visited/2, stench/2, direction/1, boredom/1, gold/1, location/2.
@@ -130,9 +137,6 @@ run_agent([yes,_,_,_,_], shoot) :-
   get_next_location(X, Y, Dx, Dy), 
   verifyWumpus(Dx,Dy),
   assert(safe(Dx, Dy)),
-
-
-
   retract(haveArrow).
 
 % Setup for arrow
